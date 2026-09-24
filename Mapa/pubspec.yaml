@@ -1,0 +1,25 @@
+name: mapa
+description: "Mapa — guie o pirata até o tesouro com uma sequência de comandos."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sounds/step.wav
+    - assets/sounds/bump.wav
+    - assets/sounds/victory.wav
+    - assets/sounds/tick.wav

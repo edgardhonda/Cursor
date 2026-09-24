@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tunel</string>
+    <string name="play">JOGAR</string>
+    <string name="settings">CONFIGURAÇÕES</string>
+    <string name="back">VOLTAR</string>
+    <string name="ready">ESTOU PRONTO</string>
+    <string name="memorize">Memorize o caminho até a coroa</string>
+    <string name="treasure_found">TESOURO ENCONTRADO!</string>
+    <string name="threat_found">VOCÊ ENCONTROU UMA AMEAÇA!</string>
+    <string name="play_again">JOGAR NOVAMENTE</string>
+    <string name="try_again">TENTAR NOVAMENTE</string>
+    <string name="new_map">NOVO MAPA</string>
+    <string name="difficulty">DIFICULDADE</string>
+    <string name="level_1">NÍVEL 1</string>
+    <string name="level_2">NÍVEL 2</string>
+    <string name="level_3">NÍVEL 3</string>
+    <string name="level_1_desc">Mapas pequenos, poucas ramificações</string>
+    <string name="level_2_desc">Mapas maiores, mais decisões</string>
+    <string name="level_3_desc">Caminhos longos, mais ameaças</string>
+    <string name="tagline">Memorize. Escolha. Encontre a coroa.</string>
+</resources>

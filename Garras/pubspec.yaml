@@ -1,0 +1,34 @@
+name: garras
+description: "Garras — capture aviões coloridos com garras e deixe-os cair no buraco."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sounds/whoosh.wav
+    - assets/sounds/snap.wav
+    - assets/sounds/fall.wav
+    - assets/sounds/miss.wav
+    - assets/sounds/chirp.wav
+    - assets/sounds/tap_0.wav
+    - assets/sounds/tap_1.wav
+    - assets/sounds/tap_2.wav
+    - assets/sounds/tap_3.wav
+    - assets/sounds/tap_4.wav
+    - assets/sounds/tap_5.wav
+    - assets/sounds/tap_6.wav
+    - assets/sounds/tap_7.wav

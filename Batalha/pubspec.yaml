@@ -1,0 +1,35 @@
+name: batalha
+description: "Batalha — dois exércitos se enfrentam até um ser destruído."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/app_icon.png
+  adaptive_icon_background: "#E8D4A0"
+  adaptive_icon_foreground: assets/app_icon.png
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/sounds/cachorro.wav
+    - assets/sounds/soldado.wav
+    - assets/sounds/cavaleiro.wav
+    - assets/sounds/gigante.wav
+    - assets/sounds/arqueiro.wav
+    - assets/sounds/canhao.wav
+    - assets/sounds/vitoria.wav

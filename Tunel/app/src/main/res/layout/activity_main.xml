@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/gl_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <com.edgard.tunel.explore.JoystickView
+        android:id="@+id/joystick"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/overlay_menu"
+        layout="@layout/overlay_menu" />
+
+    <include
+        android:id="@+id/overlay_settings"
+        layout="@layout/overlay_settings"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/overlay_memory"
+        layout="@layout/overlay_memory"
+        android:visibility="gone" />
+
+    <include
+        android:id="@+id/overlay_result"
+        layout="@layout/overlay_result"
+        android:visibility="gone" />
+</FrameLayout>
