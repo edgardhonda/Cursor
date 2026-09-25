@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dentista</string>
+    <string name="play">JOGAR</string>
+    <string name="tagline">Toque para jogar · esfregue as cáries</string>
+    <string name="lost">OS DENTES ACABARAM!</string>
+    <string name="play_again">JOGAR NOVAMENTE</string>
+    <string name="restart">REINICIAR</string>
+    <string name="clean">Limpo!</string>
+</resources>

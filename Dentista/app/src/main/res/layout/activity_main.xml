@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mouth">
+
+    <com.edgard.dentista.render.MouthView
+        android:id="@+id/mouth"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <LinearLayout
+        android:id="@+id/overlay_menu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E64A1020"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.08"
+            android:text="@string/app_name"
+            android:textAllCaps="true"
+            android:textColor="@color/gold"
+            android:textSize="42sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/tagline"
+            android:textColor="@color/ink"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_play"
+            android:layout_width="260dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_gold"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="@string/play"
+            android:textColor="@color/mouth"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/overlay_lose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#D14A1020"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="24dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/lose_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/lost"
+            android:textColor="@color/gold"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_again"
+            android:layout_width="260dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_gold"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="@string/play_again"
+            android:textColor="@color/mouth"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_restart"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_gold"
+        android:clickable="true"
+        android:focusable="true"
+        android:minWidth="140dp"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:text="@string/restart"
+        android:textColor="@color/mouth"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+</FrameLayout>
