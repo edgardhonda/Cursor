@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Labirinto</string>
+    <string name="play">JOGAR</string>
+    <string name="tagline">Siga o caminho da floresta</string>
+    <string name="choose">Escolha o caminho</string>
+    <string name="fill">Toque na peça que completa o caminho</string>
+    <string name="tap_start">Toque para começar</string>
+    <string name="loading">Montando o mapa…</string>
+    <string name="escaped">VOCÊ SAIU DA FLORESTA!</string>
+    <string name="play_again">JOGAR NOVAMENTE</string>
+    <string name="new_map">NOVO MAPA</string>
+</resources>
