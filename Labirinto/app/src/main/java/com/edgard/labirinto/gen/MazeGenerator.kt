@@ -11,15 +11,16 @@ object MazeGenerator {
     const val SIZE = 10
 
     fun generate(seed: Long): Maze {
-        for (attempt in 0 until 18) {
-            val maze = build(Random(seed + attempt * 911L), seed) ?: continue
+        val base = seed xor 0x9E3779B97F4A7C15UL.toLong()
+        for (attempt in 0 until 28) {
+            val maze = build(Random(base + attempt * 911L), base + attempt) ?: continue
             if (valid(maze)) {
-                plantGaps(maze, Random(seed + 17L))
+                plantGaps(maze, Random(base + attempt + 17L))
                 return maze
             }
         }
-        val maze = fallback(seed)
-        plantGaps(maze, Random(seed + 17L))
+        val maze = fallback(base)
+        plantGaps(maze, Random(base + 17L))
         return maze
     }
 
@@ -38,8 +39,7 @@ object MazeGenerator {
                 }
             }
         }
-        val start = 0 to 0
-        val end = (SIZE - 1) to (SIZE - 1)
+        val (start, end) = pickEnds(rng)
         val main = carveMain(rng, start, end) ?: return null
         markPath(cells, main)
         cells[start.first][start.second].kind = CellKind.ENTRANCE
@@ -67,12 +67,28 @@ object MazeGenerator {
         return Maze(SIZE, cells, start.first, start.second, end.first, end.second, seed, route)
     }
 
+    private fun pickEnds(rng: Random): Pair<Pair<Int, Int>, Pair<Int, Int>> {
+        val edge = ArrayList<Pair<Int, Int>>(SIZE * 4)
+        for (i in 0 until SIZE) {
+            edge += 0 to i
+            edge += (SIZE - 1) to i
+            edge += i to 0
+            edge += i to (SIZE - 1)
+        }
+        val start = edge[rng.nextInt(edge.size)]
+        val far = edge.filter { abs(it.first - start.first) + abs(it.second - start.second) >= 12 }
+        val end = if (far.isNotEmpty()) far[rng.nextInt(far.size)] else {
+            ((SIZE - 1 - start.first) to (SIZE - 1 - start.second))
+        }
+        return start to end
+    }
+
     private fun carveMain(
         rng: Random,
         start: Pair<Int, Int>,
         end: Pair<Int, Int>,
     ): List<Pair<Int, Int>>? {
-        repeat(48) {
+        repeat(72) {
             val path = randomWalk(rng, start, end) ?: return@repeat
             return path
         }
@@ -84,8 +100,9 @@ object MazeGenerator {
         start: Pair<Int, Int>,
         end: Pair<Int, Int>,
     ): List<Pair<Int, Int>>? {
-        val minLen = 24
-        val maxLen = 46
+        val dist0 = abs(end.first - start.first) + abs(end.second - start.second)
+        val minLen = (dist0 + 8).coerceIn(18, 28)
+        val maxLen = 52
         val path = ArrayList<Pair<Int, Int>>(maxLen)
         val seen = HashSet<Pair<Int, Int>>(maxLen)
         var r = start.first
@@ -284,8 +301,8 @@ object MazeGenerator {
             }
         }
         if (crosses < 3) return false
-        if (walkable < 34) return false
-        if (maze.route.size < 32) return false
+        if (walkable < 30) return false
+        if (maze.route.size < 22) return false
         if (maze.route.first() != (maze.startR to maze.startC)) return false
         if (maze.route.last() != (maze.endR to maze.endC)) return false
         for (i in 0 until maze.route.lastIndex) {
@@ -307,26 +324,25 @@ object MazeGenerator {
             val (r, c) = p
             val cell = maze.cell(r, c)
             if (cell.kind != CellKind.PATH) continue
-            if (cell.linkCount() != 2) continue
+            val links = cell.linkCount()
+            if (links != 2 && links != 4) continue
             val idx = firstAt[p] ?: continue
-            if (idx < 4 || idx > last - 3) continue
+            if (idx < 3 || idx > last - 2) continue
             candidates += p
         }
         candidates.shuffle(rng)
-        val want = rng.nextInt(4, 6)
+        val want = rng.nextInt(4, 8)
         val picked = ArrayList<Pair<Int, Int>>()
-        for (p in candidates) {
-            if (picked.any { abs(it.first - p.first) + abs(it.second - p.second) < 2 }) continue
-            picked += p
-            if (picked.size >= want) break
-        }
-        if (picked.size < 4) {
+        fun take(minDist: Int) {
             for (p in candidates) {
                 if (p in picked) continue
+                if (picked.any { abs(it.first - p.first) + abs(it.second - p.second) < minDist }) continue
                 picked += p
-                if (picked.size >= 4) break
+                if (picked.size >= want) return
             }
         }
+        take(2)
+        if (picked.size < want) take(1)
         for ((r, c) in picked) {
             maze.cell(r, c).gap = true
             maze.cell(r, c).revealed = false
@@ -334,29 +350,83 @@ object MazeGenerator {
     }
 
     private fun fallback(seed: Long): Maze {
+        val rng = Random(seed)
+        val (start, end) = pickEnds(rng)
         val cells = Array(SIZE) {
             Array(SIZE) {
                 Cell().also { cell ->
-                    cell.treeSeed = seed.toInt() + it.hashCode()
+                    cell.treeSeed = rng.nextInt()
+                    cell.stump = rng.nextFloat() < 0.08f
                 }
             }
         }
-        val path = listOf(
-            0 to 0, 1 to 0, 2 to 0, 3 to 0, 3 to 1, 3 to 2, 2 to 2, 1 to 2, 1 to 3, 1 to 4,
-            1 to 5, 2 to 5, 3 to 5, 4 to 5, 5 to 5, 5 to 4, 5 to 3, 5 to 2, 6 to 2, 7 to 2,
-            7 to 3, 7 to 4, 7 to 5, 7 to 6, 6 to 6, 5 to 6, 4 to 6, 4 to 7, 4 to 8, 5 to 8,
-            6 to 8, 7 to 8, 8 to 8, 8 to 9, 9 to 9,
-        )
+        val path = corridor(rng, start, end)
         markPath(cells, path)
-        cells[0][0].kind = CellKind.ENTRANCE
-        cells[SIZE - 1][SIZE - 1].kind = CellKind.EXIT
+        cells[start.first][start.second].kind = CellKind.ENTRANCE
+        cells[end.first][end.second].kind = CellKind.EXIT
         val route = ArrayList(path)
-        val rng = Random(seed)
-        listOf(3 to 0, 1 to 4, 5 to 4, 7 to 4, 4 to 6, 7 to 8).forEach { origin ->
-            if (isStraight(cells[origin.first][origin.second])) {
-                addLoop(cells, origin, rng, route)
+        walkableCells(cells).filter { it != start && it != end && isStraight(cells[it.first][it.second]) }
+            .shuffled(rng)
+            .take(8)
+            .forEach { origin -> addLoop(cells, origin, rng, route) }
+        return Maze(SIZE, cells, start.first, start.second, end.first, end.second, seed, route)
+    }
+
+    private fun corridor(rng: Random, start: Pair<Int, Int>, end: Pair<Int, Int>): List<Pair<Int, Int>> {
+        val path = ArrayList<Pair<Int, Int>>()
+        val seen = HashSet<Pair<Int, Int>>()
+        var r = start.first
+        var c = start.second
+        fun add(nr: Int, nc: Int): Boolean {
+            if (nr !in 0 until SIZE || nc !in 0 until SIZE) return false
+            val p = nr to nc
+            if (p in seen) return false
+            r = nr
+            c = nc
+            path += p
+            seen += p
+            return true
+        }
+        add(r, c)
+        val wander = rng.nextInt(10, 18)
+        repeat(wander) {
+            val dirs = Dir.entries.filter { d ->
+                val nr = r + d.dr
+                val nc = c + d.dc
+                nr in 0 until SIZE && nc in 0 until SIZE && (nr to nc) !in seen
+            }.shuffled(rng)
+            if (dirs.isEmpty()) return@repeat
+            val dir = dirs.first()
+            add(r + dir.dr, c + dir.dc)
+        }
+        var guard = 0
+        while ((r != end.first || c != end.second) && guard++ < 80) {
+            val options = ArrayList<Dir>(4)
+            if (r != end.first) options += if (end.first > r) Dir.S else Dir.N
+            if (c != end.second) options += if (end.second > c) Dir.E else Dir.W
+            options.shuffle(rng)
+            var moved = false
+            for (d in options + Dir.entries.shuffled(rng)) {
+                val nr = r + d.dr
+                val nc = c + d.dc
+                if (add(nr, nc)) {
+                    moved = true
+                    break
+                }
+            }
+            if (!moved) {
+                if (r != end.first) r += if (end.first > r) 1 else -1
+                else c += if (end.second > c) 1 else -1
+                val p = r.coerceIn(0, SIZE - 1) to c.coerceIn(0, SIZE - 1)
+                path += p
+                seen += p
+                r = p.first
+                c = p.second
             }
         }
-        return Maze(SIZE, cells, 0, 0, SIZE - 1, SIZE - 1, seed, route)
+        if (path.last() != end) {
+            path += end
+        }
+        return path
     }
 }

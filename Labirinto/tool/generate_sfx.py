@@ -115,15 +115,34 @@ def puzzle() -> list[float]:
 
 
 def wrong() -> list[float]:
-    n = int(SR * 0.38)
+    n = int(SR * 1.28)
     out: list[float] = []
+    notes = ((0.00, 392.0), (0.26, 311.1), (0.52, 233.1), (0.82, 174.6))
+    state = 41
+    lp = OnePole(900.0)
     for i in range(n):
         t = i / SR
-        u = t / 0.38
-        a = math.sin(2 * math.pi * 220 * t) * math.exp(-5.5 * u)
-        b = math.sin(2 * math.pi * 233 * t) * math.exp(-4.8 * u)
-        e = env(t, 0.38, 0.008, 0.18)
-        out.append(math.tanh((a * 0.55 + b * 0.5) * e))
+        s = 0.0
+        for start, freq in notes:
+            if t < start:
+                continue
+            tt = t - start
+            slide = freq * (1.0 - 0.08 * min(1.0, tt / 0.22))
+            vib = 1.0 + 0.012 * math.sin(2 * math.pi * 5.5 * tt)
+            tone = math.sin(2 * math.pi * slide * vib * tt)
+            odd = 0.18 * math.sin(2 * math.pi * slide * 2 * tt)
+            s += (tone + odd) * math.exp(-2.6 * tt)
+        nse, state = noise(state)
+        sniff = 0.0
+        if t > 0.92:
+            sniff = lp.lp(nse) * math.exp(-7.0 * (t - 0.92)) * 0.35
+        whimper = 0.0
+        if 0.08 < t < 1.05:
+            wt = t - 0.08
+            fall = 420.0 - 210.0 * min(1.0, wt / 0.9)
+            whimper = math.sin(2 * math.pi * fall * t) * math.exp(-1.8 * wt) * 0.22
+        e = env(t, 1.28, 0.02, 0.32)
+        out.append(math.tanh((s * 0.48 + whimper + sniff) * e))
     return out
 
 

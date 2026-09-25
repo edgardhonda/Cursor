@@ -12,13 +12,10 @@ import android.view.MotionEvent
 import android.view.View
 import com.edgard.labirinto.R
 import com.edgard.labirinto.game.GameWorld
-import com.edgard.labirinto.game.Mood
 import com.edgard.labirinto.game.PlayState
 import com.edgard.labirinto.model.CellKind
-import com.edgard.labirinto.model.Dir
 import com.edgard.labirinto.model.PathShape
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -48,8 +45,7 @@ class MazeView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
-    private val rock = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val walkerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val hero = HeroDrawer()
     private val dash = DashPathEffect(floatArrayOf(10f, 8f), 0f)
     private val tmp = Path()
     private val rect = RectF()
@@ -92,10 +88,10 @@ class MazeView @JvmOverloads constructor(
             }
         }
         drawWalker(canvas, w)
-        if (w.state == PlayState.FILLING) {
+        if (w.state == PlayState.FILLING && !w.isSad()) {
             drawFillPanel(canvas, w)
         } else {
-            drawLegend(canvas)
+            drawHeroStage(canvas, w)
         }
         if (w.state != lastState) {
             lastState = w.state
@@ -135,6 +131,7 @@ class MazeView @JvmOverloads constructor(
                     return true
                 }
                 if (w.state == PlayState.FILLING) {
+                    if (w.isSad()) return true
                     for (i in w.fillOptions.indices) {
                         if (optionRects[i].contains(event.x, event.y)) {
                             w.chooseFill(i)
@@ -153,19 +150,15 @@ class MazeView @JvmOverloads constructor(
         landscape = width > height
         val pad = min(width, height) * 0.035f
         if (landscape) {
-            cell = min((width * 0.64f) / n, (height - pad * 2) / n)
+            cell = min((width * 0.56f) / n, (height - pad * 2) / n)
             originX = pad
             originY = (height - cell * n) * 0.5f
             panelLeft = originX + cell * n + pad
             panelTop = pad
-            panelWidth = (width - panelLeft - pad).coerceAtLeast(cell * 2f)
+            panelWidth = (width - panelLeft - pad).coerceAtLeast(cell * 2.4f)
         } else {
-            val legend = if (w.state == PlayState.FILLING || w.state == PlayState.CELEBRATING) {
-                height * 0.24f
-            } else {
-                height * 0.14f
-            }
-            cell = min((width - pad * 2) / n, (height - pad * 2 - legend) / n)
+            val stage = height * 0.28f
+            cell = min((width - pad * 2) / n, (height - pad * 2 - stage) / n)
             originX = (width - cell * n) * 0.5f
             originY = pad * 0.8f
             panelLeft = 0f
@@ -294,68 +287,58 @@ class MazeView @JvmOverloads constructor(
     private fun drawWalker(canvas: Canvas, w: GameWorld) {
         val px = originX + w.walkerX() * cell
         val py = originY + w.walkerY() * cell
-        val mood = w.walker.mood
-        val jump = if (mood == Mood.HAPPY) {
-            abs(sin((0.95f - w.walker.moodT).coerceAtLeast(0f) * 16f)) * cell * 0.14f
-        } else {
-            0f
+        hero.draw(
+            canvas,
+            px,
+            py + cell * 0.18f,
+            cell * 0.82f,
+            w.walker.facing,
+            w.walker.mood,
+            w.walker.moodT,
+            w.heroPhase(),
+            w.heroWalking(),
+        )
+    }
+
+    private fun drawHeroStage(canvas: Canvas, w: GameWorld) {
+        val pad = min(width, height) * 0.02f
+        val left = if (landscape) panelLeft else pad
+        val top = panelTop
+        val right = if (landscape) panelLeft + panelWidth else width - pad
+        val bottom = height - pad
+        wood.color = 0xFF1A3322.toInt()
+        rect.set(left, top, right, bottom)
+        canvas.drawRoundRect(rect, 18f, 18f, wood)
+        pathEdge.strokeWidth = 3f
+        pathEdge.color = 0x66E6C97A.toInt()
+        canvas.drawRoundRect(rect, 18f, 18f, pathEdge)
+
+        ink.textSize = (if (landscape) panelWidth * 0.075f else cell * 0.22f).coerceIn(18f, 34f)
+        ink.color = 0xFFE8D9A8.toInt()
+        val title = when {
+            w.isSad() -> context.getString(R.string.sad)
+            w.state == PlayState.WALKING || w.state == PlayState.CELEBRATING -> context.getString(R.string.walking)
+            else -> context.getString(R.string.waiting)
         }
-        val sag = if (mood == Mood.SAD) cell * 0.06f else 0f
-        val bob = when (mood) {
-            Mood.HAPPY -> -jump
-            Mood.SAD -> sag + sin(w.walker.bob) * cell * 0.008f
-            Mood.IDLE -> sin(w.walker.bob) * cell * 0.03f
-        }
-        val yaw = when (w.walker.facing) {
-            Dir.E -> 0f
-            Dir.S -> 90f
-            Dir.W -> 180f
-            Dir.N -> 270f
-        }
-        canvas.save()
-        canvas.translate(px, py + bob)
-        canvas.rotate(yaw)
-        walkerPaint.color = 0xFF3A2A18.toInt()
-        canvas.drawCircle(0f, cell * 0.08f, cell * 0.09f, walkerPaint)
-        walkerPaint.color = if (mood == Mood.SAD) 0xFFC4A07A.toInt() else 0xFFD8B48A.toInt()
-        canvas.drawCircle(0f, -cell * 0.05f, cell * 0.11f, walkerPaint)
-        walkerPaint.color = 0xFF2F6B3A.toInt()
-        canvas.drawRoundRect(-cell * 0.08f, -cell * 0.02f, cell * 0.08f, cell * 0.16f, 6f, 6f, walkerPaint)
-        when (mood) {
-            Mood.HAPPY -> {
-                walkerPaint.color = 0xFFD8B48A.toInt()
-                canvas.drawCircle(-cell * 0.15f, -cell * 0.18f, cell * 0.055f, walkerPaint)
-                canvas.drawCircle(cell * 0.15f, -cell * 0.18f, cell * 0.055f, walkerPaint)
-                walkerPaint.color = 0xFF3A2A18.toInt()
-                walkerPaint.style = Paint.Style.STROKE
-                walkerPaint.strokeWidth = 2.4f
-                canvas.drawArc(-cell * 0.05f, -cell * 0.06f, cell * 0.05f, cell * 0.04f, 20f, 140f, false, walkerPaint)
-                walkerPaint.style = Paint.Style.FILL
-            }
-            Mood.SAD -> {
-                walkerPaint.color = 0xFFD8B48A.toInt()
-                canvas.drawCircle(-cell * 0.12f, cell * 0.14f, cell * 0.045f, walkerPaint)
-                canvas.drawCircle(cell * 0.12f, cell * 0.14f, cell * 0.045f, walkerPaint)
-                walkerPaint.color = 0xFF3A2A18.toInt()
-                walkerPaint.style = Paint.Style.STROKE
-                walkerPaint.strokeWidth = 2.4f
-                canvas.drawArc(-cell * 0.05f, -cell * 0.02f, cell * 0.05f, cell * 0.08f, 200f, 140f, false, walkerPaint)
-                walkerPaint.style = Paint.Style.FILL
-                walkerPaint.color = 0xFF6EC8E8.toInt()
-                canvas.drawCircle(cell * 0.08f, cell * 0.02f, cell * 0.035f, walkerPaint)
-            }
-            Mood.IDLE -> {}
-        }
-        canvas.restore()
-        if (mood == Mood.HAPPY) {
-            val phase = 1f - w.walker.moodT.coerceIn(0f, 1f)
-            walkerPaint.color = 0xFFF2C14A.toInt()
-            for (i in 0 until 5) {
-                val a = i * 1.256f + phase * 7f
-                val r = cell * (0.22f + 0.08f * sin(phase * 9f + i))
-                canvas.drawCircle(px + cos(a) * r, py + bob - cell * 0.12f + sin(a) * r * 0.55f, cell * 0.035f, walkerPaint)
-            }
-        }
+        canvas.drawText(title, (left + right) * 0.5f, top + ink.textSize * 1.35f, ink)
+
+        val stageH = (bottom - top) * if (landscape) 0.78f else 0.82f
+        val stageW = right - left
+        val heroH = min(stageW * 0.92f, stageH * 0.88f)
+        val cx = (left + right) * 0.5f
+        val feet = bottom - (bottom - top) * 0.12f
+        hero.draw(
+            canvas,
+            cx,
+            feet,
+            heroH,
+            w.walker.facing,
+            w.walker.mood,
+            w.walker.moodT,
+            w.heroPhase(),
+            w.heroWalking(),
+        )
+        ink.color = 0xFFF4E8C8.toInt()
     }
 
     private fun drawFillPanel(canvas: Canvas, w: GameWorld) {
@@ -415,26 +398,6 @@ class MazeView @JvmOverloads constructor(
             if (reject) 0xFFB85A48.toInt() else 0xFFD7B56A.toInt(),
             if (reject) 0xFFE8A090.toInt() else 0xFFE6C97A.toInt(),
         )
-    }
-
-    private fun drawLegend(canvas: Canvas) {
-        val labels = listOf("Árvore", "Horizontal", "Vertical", "Curva", "Cruzamento", "Faltando", "Saída")
-        ink.color = 0xFFE8D9A8.toInt()
-        if (landscape) {
-            ink.textSize = (cell * 0.22f).coerceAtMost(panelWidth * 0.14f)
-            val step = (height - panelTop * 2) / labels.size
-            val cx = panelLeft + panelWidth * 0.5f
-            labels.forEachIndexed { i, label ->
-                canvas.drawText(label, cx, panelTop + step * (i + 0.55f), ink)
-            }
-        } else {
-            ink.textSize = cell * 0.18f
-            val slot = panelWidth / labels.size
-            labels.forEachIndexed { i, label ->
-                canvas.drawText(label, slot * (i + 0.5f), panelTop + cell * 0.55f, ink)
-            }
-        }
-        ink.color = 0xFFF4E8C8.toInt()
     }
 
     private fun drawTapHint(canvas: Canvas, w: GameWorld) {

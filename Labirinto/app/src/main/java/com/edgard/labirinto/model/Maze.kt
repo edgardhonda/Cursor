@@ -45,7 +45,11 @@ enum class PathShape(val n: Boolean, val e: Boolean, val s: Boolean, val w: Bool
             TWO_LINK.firstOrNull { it.n == cell.n && it.e == cell.e && it.s == cell.s && it.w == cell.w }
                 ?: CROSS
 
-        fun optionsFor(came: Dir): List<PathShape> = TWO_LINK.filter { it.has(came) }
+        fun optionsFor(came: Dir, correct: PathShape): List<PathShape> {
+            val pool = (TWO_LINK.filter { it.has(came) } + CROSS).distinct()
+            val rest = pool.filter { it != correct }.shuffled()
+            return listOf(correct) + rest.take(2)
+        }
     }
 }
 

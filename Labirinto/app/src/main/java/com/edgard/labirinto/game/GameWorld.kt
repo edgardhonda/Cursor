@@ -57,17 +57,14 @@ class GameWorld {
     private val cacheLock = Any()
     private var cached: Maze? = null
     private var genSeq: Int = 0
+    private val recentSeeds = ArrayDeque<Long>()
 
     init {
         prefetch()
     }
 
     fun newMap() {
-        val ready = synchronized(cacheLock) {
-            val hit = cached
-            cached = null
-            hit
-        }
+        val ready = takeCached()
         if (ready != null) {
             applyMaze(ready)
             prefetch()
@@ -76,20 +73,40 @@ class GameWorld {
         state = PlayState.LOADING
         val seq = ++genSeq
         gen.execute {
-            val maze = MazeGenerator.generate(Random.nextLong())
+            val maze = freshMaze()
             main.post {
                 if (seq != genSeq) return@post
                 applyMaze(maze)
                 prefetch()
-                onChanged?.invoke()
             }
         }
+    }
+
+    private fun takeCached(): Maze? = synchronized(cacheLock) {
+        val hit = cached ?: return null
+        if (hit.seed in recentSeeds) {
+            cached = null
+            return null
+        }
+        cached = null
+        hit
+    }
+
+    private fun freshMaze(): Maze {
+        var maze: Maze
+        var guard = 0
+        do {
+            maze = MazeGenerator.generate(System.nanoTime() xor Random.nextLong() xor guard.toLong())
+            guard++
+        } while (maze.seed in recentSeeds && guard < 6)
+        return maze
     }
 
     fun retrySame() {
         maze.resetGaps()
         resetWalker()
         state = PlayState.READY
+        onChanged?.invoke()
     }
 
     fun beginWalk() {
@@ -105,13 +122,16 @@ class GameWorld {
     private fun applyMaze(next: Maze) {
         seed = next.seed
         maze = next
+        recentSeeds.addLast(next.seed)
+        if (recentSeeds.size > 10) recentSeeds.removeFirst()
         resetWalker()
         state = PlayState.READY
+        onChanged?.invoke()
     }
 
     private fun prefetch() {
         gen.execute {
-            val maze = MazeGenerator.generate(Random.nextLong())
+            val maze = freshMaze()
             synchronized(cacheLock) { cached = maze }
         }
     }
@@ -138,9 +158,9 @@ class GameWorld {
         val correct = PathShape.of(cell)
         if (picked != correct) {
             rejectIndex = index
-            rejectT = 1.05f
+            rejectT = 1.55f
             walker.mood = Mood.SAD
-            walker.moodT = 1.2f
+            walker.moodT = 1.55f
             audio?.wrong()
             return
         }
@@ -160,8 +180,13 @@ class GameWorld {
         if (rejectT > 0f) rejectT = (rejectT - dt).coerceAtLeast(0f)
         when (state) {
             PlayState.FILLING -> {
-                walker.bob += dt * 3.2f
-                if (walker.moodT > 0f) walker.moodT = (walker.moodT - dt).coerceAtLeast(0f)
+                walker.bob += if (walker.mood == Mood.SAD) dt * 12f else dt * 3.2f
+                if (walker.moodT > 0f) {
+                    walker.moodT = (walker.moodT - dt).coerceAtLeast(0f)
+                    if (walker.moodT <= 0f && walker.mood == Mood.SAD) {
+                        walker.mood = Mood.IDLE
+                    }
+                }
             }
             PlayState.CELEBRATING -> {
                 walker.bob += dt * 16f
@@ -176,7 +201,7 @@ class GameWorld {
                 walker.bob += dt * 5f
             }
             PlayState.WALKING -> {
-                walker.bob += dt * 9f
+                walker.bob += dt * 11f
                 walker.progress += dt * 1.55f
                 while (walker.progress >= 1f && state == PlayState.WALKING) {
                     walker.progress -= 1f
@@ -218,8 +243,10 @@ class GameWorld {
 
     private fun beginFill() {
         val came = walker.facing.opposite()
-        val options = PathShape.optionsFor(came).toMutableList()
-        options.shuffle(Random(maze.cell(walker.row, walker.col).treeSeed.toLong() xor came.ordinal.toLong()))
+        val cell = maze.cell(walker.row, walker.col)
+        val correct = PathShape.of(cell)
+        val options = PathShape.optionsFor(came, correct).toMutableList()
+        options.shuffle(Random(cell.treeSeed.toLong() xor came.ordinal.toLong()))
         fillOptions = options
         rejectIndex = -1
         rejectT = 0f
@@ -238,6 +265,13 @@ class GameWorld {
         val (nr, nc) = route[routeIndex + 1]
         return Dir.entries.firstOrNull { r + it.dr == nr && c + it.dc == nc } ?: walker.facing
     }
+
+    fun heroWalking(): Boolean = state == PlayState.WALKING
+
+    fun isSad(): Boolean = walker.mood == Mood.SAD && walker.moodT > 0.04f
+
+    fun heroPhase(): Float =
+        if (state == PlayState.WALKING) walker.progress * (Math.PI * 4.0).toFloat() else walker.bob
 
     fun walkerX(): Float = walker.col + 0.5f + walker.facing.dc * walker.progress
 

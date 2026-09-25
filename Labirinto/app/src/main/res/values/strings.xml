@@ -5,6 +5,9 @@
     <string name="tagline">Siga o caminho da floresta</string>
     <string name="choose">Escolha o caminho</string>
     <string name="fill">Toque na peça que completa o caminho</string>
+    <string name="walking">Pelo caminho da floresta</string>
+    <string name="waiting">Pronto para o passeio</string>
+    <string name="sad">Que pena… tente de novo</string>
     <string name="tap_start">Toque para começar</string>
     <string name="loading">Montando o mapa…</string>
     <string name="escaped">VOCÊ SAIU DA FLORESTA!</string>

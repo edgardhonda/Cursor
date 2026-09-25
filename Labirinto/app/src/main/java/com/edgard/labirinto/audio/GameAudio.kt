@@ -49,7 +49,7 @@ class GameAudio(context: Context) {
 
     fun puzzle() = play(PUZZLE, 0.72f, 1.0f)
 
-    fun wrong() = play(WRONG, 0.82f, 1.0f)
+    fun wrong() = play(WRONG, 0.95f, 1.0f)
 
     fun correct() = play(CORRECT, 0.92f, 1.0f)
 
