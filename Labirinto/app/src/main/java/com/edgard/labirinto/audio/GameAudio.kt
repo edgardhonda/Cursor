@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import com.edgard.labirinto.R
+import java.util.concurrent.Executors
 
 class GameAudio(context: Context) {
     private val pool: SoundPool
@@ -11,6 +12,9 @@ class GameAudio(context: Context) {
     private val ready = HashSet<Int>(16)
     private var released = false
     private var lastStepNs = 0L
+    private val playback = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "labirinto-audio").apply { isDaemon = true }
+    }
 
     init {
         val attrs = AudioAttributes.Builder()
@@ -58,6 +62,7 @@ class GameAudio(context: Context) {
     fun release() {
         if (released) return
         released = true
+        playback.shutdownNow()
         pool.release()
         ids.clear()
         ready.clear()
@@ -67,7 +72,16 @@ class GameAudio(context: Context) {
         if (released) return
         val id = ids[name] ?: return
         if (id == 0 || id !in ready) return
-        pool.play(id, volume, volume, 1, 0, rate)
+        try {
+            playback.execute {
+                if (released) return@execute
+                try {
+                    pool.play(id, volume, volume, 1, 0, rate)
+                } catch (_: RuntimeException) {
+                }
+            }
+        } catch (_: RuntimeException) {
+        }
     }
 
     companion object {

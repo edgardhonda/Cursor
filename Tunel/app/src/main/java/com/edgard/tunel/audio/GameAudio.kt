@@ -37,6 +37,9 @@ class GameAudio(context: Context) {
         load(MONSTER, R.raw.monster)
         load(SPIDER, R.raw.spider)
         load(SKULL, R.raw.skull)
+        load(SNAKE, R.raw.snake)
+        load(SCORPION, R.raw.scorpion)
+        load(GHOST, R.raw.ghost)
     }
 
     fun click() = play(CLICK, 0.55f, 1.0f)
@@ -54,6 +57,9 @@ class GameAudio(context: Context) {
             ThreatType.MONSTER -> play(MONSTER, 0.95f, 1.0f)
             ThreatType.SPIDER -> play(SPIDER, 0.88f, 1.0f)
             ThreatType.SKULL -> play(SKULL, 0.90f, 1.0f)
+            ThreatType.SNAKE -> play(SNAKE, 0.86f, 1.0f)
+            ThreatType.SCORPION -> play(SCORPION, 0.90f, 1.0f)
+            ThreatType.GHOST -> play(GHOST, 0.84f, 1.0f)
         }
     }
 
@@ -91,5 +97,8 @@ class GameAudio(context: Context) {
         private const val MONSTER = "monster"
         private const val SPIDER = "spider"
         private const val SKULL = "skull"
+        private const val SNAKE = "snake"
+        private const val SCORPION = "scorpion"
+        private const val GHOST = "ghost"
     }
 }

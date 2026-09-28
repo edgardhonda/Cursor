@@ -324,25 +324,32 @@ object MazeGenerator {
             val (r, c) = p
             val cell = maze.cell(r, c)
             if (cell.kind != CellKind.PATH) continue
-            val links = cell.linkCount()
-            if (links != 2 && links != 4) continue
             val idx = firstAt[p] ?: continue
             if (idx < 3 || idx > last - 2) continue
             candidates += p
         }
-        candidates.shuffle(rng)
-        val want = rng.nextInt(4, 8)
+        val ordered = candidates.sortedBy { firstAt[it] ?: 0 }
         val picked = ArrayList<Pair<Int, Int>>()
-        fun take(minDist: Int) {
-            for (p in candidates) {
+        var cursor = 3
+        while (cursor <= last - 2) {
+            val choice = ordered.firstOrNull { p ->
+                val idx = firstAt[p] ?: return@firstOrNull false
+                idx >= cursor && p !in picked
+            } ?: break
+            val idx = firstAt[choice] ?: break
+            if (idx > last - 2) break
+            picked += choice
+            cursor = idx + 5 + rng.nextInt(3)
+        }
+        if (picked.size < 3) {
+            for (p in ordered) {
                 if (p in picked) continue
-                if (picked.any { abs(it.first - p.first) + abs(it.second - p.second) < minDist }) continue
+                val idx = firstAt[p] ?: continue
+                if (picked.any { abs((firstAt[it] ?: 0) - idx) < 3 }) continue
                 picked += p
-                if (picked.size >= want) return
+                if (picked.size >= 3) break
             }
         }
-        take(2)
-        if (picked.size < want) take(1)
         for ((r, c) in picked) {
             maze.cell(r, c).gap = true
             maze.cell(r, c).revealed = false
@@ -400,32 +407,34 @@ object MazeGenerator {
             add(r + dir.dr, c + dir.dc)
         }
         var guard = 0
-        while ((r != end.first || c != end.second) && guard++ < 80) {
-            val options = ArrayList<Dir>(4)
-            if (r != end.first) options += if (end.first > r) Dir.S else Dir.N
-            if (c != end.second) options += if (end.second > c) Dir.E else Dir.W
-            options.shuffle(rng)
-            var moved = false
-            for (d in options + Dir.entries.shuffled(rng)) {
+        while ((r != end.first || c != end.second) && guard++ < SIZE * SIZE) {
+            val dist = abs(end.first - r) + abs(end.second - c)
+            val options = Dir.entries.filter { d ->
                 val nr = r + d.dr
                 val nc = c + d.dc
-                if (add(nr, nc)) {
-                    moved = true
-                    break
-                }
+                nr in 0 until SIZE && nc in 0 until SIZE && (nr to nc) !in seen
             }
-            if (!moved) {
-                if (r != end.first) r += if (end.first > r) 1 else -1
-                else c += if (end.second > c) 1 else -1
-                val p = r.coerceIn(0, SIZE - 1) to c.coerceIn(0, SIZE - 1)
-                path += p
-                seen += p
-                r = p.first
-                c = p.second
+            if (options.isEmpty()) break
+            val dir = options.minBy { d ->
+                val nd = abs(end.first - (r + d.dr)) + abs(end.second - (c + d.dc))
+                if (nd < dist) nd else nd + 8
             }
+            if (!add(r + dir.dr, c + dir.dc)) break
         }
-        if (path.last() != end) {
-            path += end
+        guard = 0
+        while ((r != end.first || c != end.second) && guard++ < SIZE * 2) {
+            val d = when {
+                r != end.first -> if (end.first > r) Dir.S else Dir.N
+                else -> if (end.second > c) Dir.E else Dir.W
+            }
+            val nr = (r + d.dr).coerceIn(0, SIZE - 1)
+            val nc = (c + d.dc).coerceIn(0, SIZE - 1)
+            if (nr == r && nc == c) break
+            r = nr
+            c = nc
+            val p = r to c
+            if (path.last() != p) path += p
+            seen += p
         }
         return path
     }

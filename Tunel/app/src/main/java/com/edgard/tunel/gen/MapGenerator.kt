@@ -41,9 +41,20 @@ object MapGenerator {
 
         fun pickColor(from: MapNode, to: MapNode): MapColor {
             val used = usedColors(from, tunnels) + usedColors(to, tunnels)
-            val free = MapColor.entries.filter { it !in used }
-            return if (free.isEmpty()) MapColor.entries[rng.nextInt(MapColor.entries.size)]
-            else free[rng.nextInt(free.size)]
+            val outgoing = from.outgoing.map { tunnels[it].color }
+            val group = when {
+                outgoing.isNotEmpty() -> outgoing.first().contrast
+                used.isNotEmpty() -> 1 - used.first().contrast
+                else -> rng.nextInt(2)
+            }
+            val preferred = MapColor.contrastGroup(group).filter { it !in used }
+            val pool = preferred.ifEmpty {
+                MapColor.entries.filter { it !in used }.ifEmpty { MapColor.entries }
+            }
+            if (used.isEmpty()) return pool[rng.nextInt(pool.size)]
+            val best = pool.maxOf { c -> used.minOf { c.hueDistance(it) } }
+            val ranked = pool.filter { c -> used.minOf { c.hueDistance(it) } >= best - 0.5f }
+            return ranked[rng.nextInt(ranked.size)]
         }
 
         fun connect(from: MapNode, to: MapNode) {
@@ -86,7 +97,7 @@ object MapGenerator {
                 if (d.level >= 2 && rng.nextFloat() < 0.28f) branchable += n
                 walk = n
             }
-            val threat = addNode(NodeType.THREAT, ThreatType.entries[rng.nextInt(3)])
+            val threat = addNode(NodeType.THREAT, ThreatType.entries.random(rng))
             connect(walk, threat)
             extra--
         }
@@ -94,9 +105,13 @@ object MapGenerator {
         val rooms = nodes.filter { it.type == NodeType.START || it.type == NodeType.NORMAL }
         for (n in rooms) {
             while (n.outgoing.size < d.minOut && nodes.size < d.maxNodes) {
-                val threat = addNode(NodeType.THREAT, ThreatType.entries[rng.nextInt(3)])
+                val threat = addNode(NodeType.THREAT, ThreatType.entries.random(rng))
                 connect(n, threat)
             }
+        }
+
+        for (n in nodes) {
+            if (n.outgoing.size > 1) n.outgoing.shuffle(rng)
         }
 
         layout(nodes, tunnels)

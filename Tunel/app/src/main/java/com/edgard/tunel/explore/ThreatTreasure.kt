@@ -26,18 +26,29 @@ class ThreatController {
         if (revealed) time += dt
     }
 
-    fun height(): Float = when (type) {
-        ThreatType.MONSTER -> (-1.2f + time * 3.6f).coerceAtMost(0f)
-        ThreatType.SPIDER -> (2.8f - time * 4.2f).coerceAtLeast(0.15f)
-        ThreatType.SKULL -> 0.4f + kotlin.math.sin(time * 8f) * 0.08f
+    fun height(): Float {
+        val rest = when (type) {
+            ThreatType.SPIDER -> 0.15f
+            ThreatType.SKULL -> 0.4f
+            ThreatType.GHOST -> 0.7f
+            else -> 0f
+        }
+        val falling = 2.8f - time * 4.2f
+        if (falling > rest) return falling
+        return if (type == ThreatType.SKULL) rest + kotlin.math.sin(time * 8f) * 0.08f else rest
     }
 
     fun scale(): Float = when (type) {
         ThreatType.SKULL -> (time * 2.2f).coerceAtMost(1f)
+        ThreatType.GHOST -> (0.25f + time * 1.3f).coerceAtMost(1f)
         else -> (0.4f + time * 1.6f).coerceAtMost(1f)
     }
 
-    fun shake(): Float = if (type == ThreatType.MONSTER && time > 0.45f) kotlin.math.sin(time * 28f) * 0.08f else 0f
+    fun shake(): Float = when (type) {
+        ThreatType.MONSTER -> if (time > 0.45f) kotlin.math.sin(time * 28f) * 0.08f else 0f
+        ThreatType.SNAKE -> kotlin.math.sin(time * 10f) * 0.1f
+        else -> 0f
+    }
 }
 
 class TreasureController {

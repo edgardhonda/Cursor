@@ -121,9 +121,9 @@ object WorldBuilder {
             val side = TUNNEL_W * 0.5f + 0.12f
             val px = cos(yaw) * side
             val pz = -sin(yaw) * side
-            b.addBox(mx + px, TUNNEL_H * 0.5f, mz + pz, 0.22f, TUNNEL_H, dist, yaw, cr * 0.75f, cg * 0.75f, cb * 0.75f)
-            b.addBox(mx - px, TUNNEL_H * 0.5f, mz - pz, 0.22f, TUNNEL_H, dist, yaw, cr * 0.75f, cg * 0.75f, cb * 0.75f)
-            b.addBox(mx, TUNNEL_H - 0.08f, mz, TUNNEL_W + 0.2f, 0.16f, dist, yaw, cr * 0.4f, cg * 0.4f, cb * 0.4f)
+            b.addBox(mx + px, TUNNEL_H * 0.5f, mz + pz, 0.22f, TUNNEL_H, dist, yaw, cr * 0.92f, cg * 0.92f, cb * 0.92f)
+            b.addBox(mx - px, TUNNEL_H * 0.5f, mz - pz, 0.22f, TUNNEL_H, dist, yaw, cr * 0.92f, cg * 0.92f, cb * 0.92f)
+            b.addBox(mx, TUNNEL_H - 0.08f, mz, TUNNEL_W + 0.2f, 0.16f, dist, yaw, cr * 0.58f, cg * 0.58f, cb * 0.58f)
         }
 
         return WorldData(b.build(), portals, rooms)

@@ -108,6 +108,9 @@ class MemoryMapView @JvmOverloads constructor(
                     val mark = when (n.threat) {
                         ThreatType.SPIDER -> "🕷️"
                         ThreatType.SKULL -> "💀"
+                        ThreatType.SNAKE -> "🐍"
+                        ThreatType.SCORPION -> "🦂"
+                        ThreatType.GHOST -> "👻"
                         else -> "👹"
                     }
                     canvas.drawText(mark, x, y + glyph.textSize * 0.35f, glyph)

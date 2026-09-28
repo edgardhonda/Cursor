@@ -194,7 +194,8 @@ class GameWorld {
                 if (walker.moodT <= 0f) {
                     walker.mood = Mood.IDLE
                     walker.moodT = 0f
-                    state = PlayState.WALKING
+                    if (routeIndex >= maze.route.lastIndex) finishWalk()
+                    else state = PlayState.WALKING
                 }
             }
             PlayState.READY, PlayState.LOADING -> {
@@ -203,10 +204,13 @@ class GameWorld {
             PlayState.WALKING -> {
                 walker.bob += dt * 11f
                 walker.progress += dt * 1.55f
-                while (walker.progress >= 1f && state == PlayState.WALKING) {
+                var hops = 0
+                while (walker.progress >= 1f && state == PlayState.WALKING && hops < 6) {
+                    hops++
                     walker.progress -= 1f
                     enterNext()
                 }
+                if (state == PlayState.WALKING && walker.progress >= 1f) walker.progress = 0f
             }
             else -> {}
         }
@@ -215,30 +219,40 @@ class GameWorld {
     private fun enterNext() {
         val nextIdx = routeIndex + 1
         if (nextIdx >= maze.route.size) {
-            if (maze.cell(walker.row, walker.col).kind == CellKind.EXIT) {
-                state = PlayState.WON
-                walker.progress = 0f
-                audio?.win()
-            }
+            finishWalk()
             return
         }
         val (nr, nc) = maze.route[nextIdx]
+        if (!maze.inBounds(nr, nc)) {
+            finishWalk()
+            return
+        }
+        val jump = kotlin.math.abs(walker.row - nr) + kotlin.math.abs(walker.col - nc) != 1
         walker.row = nr
         walker.col = nc
         routeIndex = nextIdx
-        audio?.step()
         val cell = maze.cell(nr, nc)
         if (cell.isOpenGap()) {
             beginFill()
             return
         }
-        if (cell.kind == CellKind.EXIT && nextIdx == maze.route.lastIndex) {
-            state = PlayState.WON
-            walker.progress = 0f
-            audio?.win()
+        if (nextIdx == maze.route.lastIndex) {
+            finishWalk()
             return
         }
+        if (jump) {
+            walker.progress += 1f
+            return
+        }
+        audio?.step()
         walker.facing = dirToNext()
+    }
+
+    private fun finishWalk() {
+        if (state == PlayState.WON) return
+        state = PlayState.WON
+        walker.progress = 0f
+        audio?.win()
     }
 
     private fun beginFill() {

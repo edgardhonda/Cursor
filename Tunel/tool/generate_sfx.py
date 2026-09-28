@@ -211,6 +211,58 @@ def skull() -> list[float]:
     return out
 
 
+def snake() -> list[float]:
+    n = int(SR * 0.78)
+    out: list[float] = []
+    state = 523
+    hp = OnePole(1800.0)
+    for i in range(n):
+        t = i / SR
+        nse, state = noise(state)
+        hiss = hp.hp(nse) * (0.45 + 0.55 * math.sin(2 * math.pi * 7 * t))
+        tongue = math.sin(2 * math.pi * (1400 + 500 * math.sin(2 * math.pi * 18 * t)) * t)
+        tongue *= 1.0 if (t * 9.0) % 1.0 < 0.22 else 0.0
+        e = env(t, 0.78, 0.03, 0.24)
+        out.append(math.tanh((hiss * 0.72 + tongue * 0.18) * e))
+    return out
+
+
+def scorpion() -> list[float]:
+    n = int(SR * 0.68)
+    out: list[float] = []
+    state = 631
+    hp = OnePole(900.0)
+    for i in range(n):
+        t = i / SR
+        nse, state = noise(state)
+        click_gate = 1.0 if (t * 16.0) % 1.0 < 0.07 else 0.0
+        click = math.sin(2 * math.pi * 2100 * t) * click_gate * math.exp(-40 * ((t * 16.0) % 1.0))
+        rattle = hp.hp(nse) * (0.3 + 0.7 * abs(math.sin(2 * math.pi * 22 * t)))
+        sting = math.sin(2 * math.pi * 90 * t) * math.exp(-6 * t) * 0.35
+        e = env(t, 0.68, 0.008, 0.2)
+        out.append(math.tanh((click * 0.7 + rattle * 0.45 + sting) * e))
+    return out
+
+
+def ghost() -> list[float]:
+    n = int(SR * 1.05)
+    out: list[float] = []
+    state = 809
+    hp = OnePole(400.0)
+    lp = OnePole(900.0)
+    for i in range(n):
+        t = i / SR
+        u = t / 1.05
+        nse, state = noise(state)
+        air = hp.hp(lp.lp(nse))
+        f = 310 - 140 * u + 12 * math.sin(2 * math.pi * 4.5 * t)
+        moan = math.sin(2 * math.pi * f * t)
+        over = math.sin(2 * math.pi * f * 2.01 * t) * 0.25
+        e = env(t, 1.05, 0.08, 0.42) * (0.65 + 0.35 * math.sin(2 * math.pi * 1.6 * t))
+        out.append(math.tanh((moan * 0.55 + over + air * 0.4) * e))
+    return out
+
+
 def main() -> None:
     os.makedirs(RAW, exist_ok=True)
     files = {
@@ -223,6 +275,9 @@ def main() -> None:
         "monster.wav": monster(),
         "spider.wav": spider(),
         "skull.wav": skull(),
+        "snake.wav": snake(),
+        "scorpion.wav": scorpion(),
+        "ghost.wav": ghost(),
     }
     for name, samples in files.items():
         path = os.path.join(RAW, name)

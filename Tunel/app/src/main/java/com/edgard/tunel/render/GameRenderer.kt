@@ -197,6 +197,54 @@ class GameRenderer(
                 part(box, x + 0.16f * s, 1.18f * s + y, z + 0.26f * s, 0.16f * s, 0.14f * s, 0.08f * s, 0f, 0.08f, 0.06f, 0.06f)
                 part(box, x, 0.78f * s + y, z + 0.22f * s, 0.35f * s, 0.18f * s, 0.16f * s, 0f, 0.15f, 0.12f, 0.12f)
             }
+            ThreatType.SNAKE -> {
+                for (i in 0 until 6) {
+                    val along = (i - 2.5f) * 0.3f * s
+                    val side = sin(th.time * 8f + i * 0.95f) * 0.2f * s
+                    val head = i == 5
+                    part(
+                        box, x + side, (if (head) 0.48f else 0.2f) * s + y, z + along,
+                        (if (head) 0.24f else 0.16f) * s, (if (head) 0.22f else 0.14f) * s, 0.34f * s,
+                        side * 0.6f, 0.16f, 0.52f, 0.2f,
+                    )
+                }
+                val hx = x + sin(th.time * 8f + 4.75f) * 0.2f * s
+                val hz = z + 2.5f * 0.3f * s
+                part(box, hx - 0.08f * s, 0.58f * s + y, hz + 0.08f * s, 0.05f * s, 0.05f * s, 0.04f * s, 0f, 0.95f, 0.85f, 0.2f)
+                part(box, hx + 0.08f * s, 0.58f * s + y, hz + 0.08f * s, 0.05f * s, 0.05f * s, 0.04f * s, 0f, 0.95f, 0.85f, 0.2f)
+                part(box, hx, 0.42f * s + y, hz + 0.22f * s, 0.04f * s, 0.04f * s, 0.22f * s, 0.4f, 0.75f, 0.15f, 0.18f)
+            }
+            ThreatType.SCORPION -> {
+                part(box, x, 0.36f * s + y, z, 0.5f * s, 0.26f * s, 0.82f * s, 0f, 0.45f, 0.28f, 0.1f)
+                part(box, x - 0.42f * s, 0.32f * s + y, z + 0.42f * s, 0.28f * s, 0.1f * s, 0.2f * s, 0.55f, 0.58f, 0.34f, 0.12f)
+                part(box, x + 0.42f * s, 0.32f * s + y, z + 0.42f * s, 0.28f * s, 0.1f * s, 0.2f * s, -0.55f, 0.58f, 0.34f, 0.12f)
+                for (i in 0 until 6) {
+                    val side = if (i % 2 == 0) -1f else 1f
+                    val along = (i / 2 - 1) * 0.26f * s
+                    part(box, x + side * 0.46f * s, 0.16f * s + y, z + along, 0.26f * s, 0.07f * s, 0.07f * s, side * 0.25f, 0.36f, 0.22f, 0.08f)
+                }
+                val strike = sin(th.time * 6f).coerceAtLeast(0f)
+                for (i in 0 until 4) {
+                    val u = i / 3f
+                    part(
+                        box, x, (0.48f + u * 0.82f - strike * u * 0.4f) * s + y, z - (0.32f + u * 0.12f) * s,
+                        0.13f * s, 0.15f * s, 0.16f * s, -0.7f * u, 0.5f, 0.3f, 0.1f,
+                    )
+                }
+                part(box, x, (1.32f - strike * 0.45f) * s + y, z - 0.12f * s, 0.07f * s, 0.2f * s, 0.07f * s, 0f, 0.78f, 0.18f, 0.12f)
+            }
+            ThreatType.GHOST -> {
+                val bob = sin(th.time * 3.4f) * 0.1f * s
+                val sway = sin(th.time * 2.1f) * 0.08f * s
+                part(box, x + sway, 1.15f * s + y + bob, z, 0.68f * s, 1.1f * s, 0.42f * s, 0f, 0.82f, 0.88f, 0.96f)
+                part(box, x + sway, 1.82f * s + y + bob, z, 0.52f * s, 0.38f * s, 0.38f * s, 0f, 0.9f, 0.95f, 1f)
+                for (i in -1..1) {
+                    val w = sin(th.time * 5f + i) * 0.05f * s
+                    part(box, x + sway + i * 0.22f * s, 0.52f * s + y + bob + w, z, 0.18f * s, 0.26f * s, 0.26f * s, 0f, 0.74f, 0.82f, 0.92f)
+                }
+                part(box, x + sway - 0.14f * s, 1.68f * s + y + bob, z + 0.2f * s, 0.1f * s, 0.14f * s, 0.05f * s, 0f, 0.12f, 0.32f, 0.55f)
+                part(box, x + sway + 0.14f * s, 1.68f * s + y + bob, z + 0.2f * s, 0.1f * s, 0.14f * s, 0.05f * s, 0f, 0.12f, 0.32f, 0.55f)
+            }
         }
     }
 
