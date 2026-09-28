@@ -349,9 +349,26 @@ class GameWorld {
     private fun nextTarget(): Tooth? {
         val living = teeth.filter { !it.destroyed }
         if (living.isEmpty()) return null
-        val free = living.filter { tooth -> cavities.none { it.targetId == tooth.id } }
-        val pool = if (free.isNotEmpty()) free else living
-        return pool.minByOrNull { tooth -> cavities.count { it.targetId == tooth.id } }
+        val least = living.minOf { tooth -> cavities.count { it.targetId == tooth.id } }
+        val choices = living.filter { tooth -> cavities.count { it.targetId == tooth.id } == least }
+        val busy = cavities.mapNotNull { toothById(it.targetId) }.filter { !it.destroyed }
+        if (busy.isEmpty() || choices.size == 1) return choices[rng.nextInt(choices.size)]
+        var bestDist = -1f
+        val far = ArrayList<Tooth>()
+        for (tooth in choices) {
+            val dist = busy
+                .filter { it.id != tooth.id }
+                .minOfOrNull { hypot(tooth.nx - it.nx, tooth.ny - it.ny) }
+                ?: 1f
+            if (dist > bestDist + 0.001f) {
+                bestDist = dist
+                far.clear()
+                far += tooth
+            } else if (dist >= bestDist - 0.001f) {
+                far += tooth
+            }
+        }
+        return far[rng.nextInt(far.size)]
     }
 
     private fun spawnOne(): Boolean {
